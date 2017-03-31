@@ -149,13 +149,13 @@ def serialmerge(df, kind="mean", digitize_threshold=None, key="val"):
     merged["Nobs"] = df.groupby(df.index).size()
 
     # setup
-    refs = df.index.drop_duplicates()     # get unique set of indices
-    C = np.eye(refs.size)                 # initializing the comparison matrix
-    counter = np.eye(refs.size)           # matrix to keep track of number of observations
+    refs = df.index.drop_duplicates()          # get unique set of indices
+    C = np.eye(refs.size, dtype=np.float32)    # initializing the comparison matrix
+    counter = np.eye(refs.size)                # matrix to keep track of number of observations
 
     # Prepare comparison matrix
     for frame, subdf in df.groupby("frame"):
-        subdf = subdf.groupby(subdf.index)[key].first()   # Check for duplicate reflections from a single frame
+        subdf = subdf.groupby(subdf.index)[key].first()      # Check for duplicate reflections from a single frame
         tri = np.tri(subdf.size, dtype=int)                  # We know that an ordered ranking produces a triangular matrix
                                                              # So we can make use of that here (for speed reasons)
         idx = [refs.get_loc(ref) for ref in subdf.sort_values().index]
