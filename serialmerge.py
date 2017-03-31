@@ -130,7 +130,7 @@ def pearsonr(x, y):
     return np.sum(xdiff * ydiff) / (np.sum(xdiff * xdiff) * np.sum(ydiff * ydiff))**0.5
 
 
-def serialmerge(df, kind="mean", digitize_threshold=None, key="val"):
+def serialmerge(df, kind="mean", digitize_threshold=None, key="val", verbose=False):
     """Implementation based on SerialRank algorithm
     http://arxiv.org/abs/1406.5370
     http://www.di.ens.fr/~fogel/SerialRank/tutorial.html"""
@@ -191,6 +191,14 @@ def serialmerge(df, kind="mean", digitize_threshold=None, key="val"):
     merged.sort_values(key, ascending=False, inplace=True)    # sort the values by intensity
     merged.index = index                                      # overwrite index with new ranking
 
+    if verbose:
+        print("Array shape: {}".format(C.shape))
+        print("Memory usage: {} MB".format(C.nbytes / (1024*1024)))
+        nfilled = np.sum(counter!=0)
+        print("Completeness: {}/{}={:.2%}".format(nfilled, C.size, float(nfilled)/C.size))
+        print("Reflection redundancy: {:.2f}".format(float(len(df)) / len(merged)))
+        print("Pair redundancy: {:.3f}".format(((counter.sum() - refs.size)) / ((nfilled - refs.size))))
+
     return merged
 
 
@@ -244,6 +252,9 @@ hkl files should be in free format (space separated) with 5 columns: h k l I/F e
     parser.add_argument("args",
                         type=str, metavar="FN", nargs='*',
                         help="File or directory name")
+    parser.add_argument("--verbose", "-v",
+                        action="store_true", dest="verbose",
+                        help="Be more verbose.")
 
     parser.set_defaults()
 
@@ -268,7 +279,7 @@ hkl files should be in free format (space separated) with 5 columns: h k l I/F e
     print("unique reflections:", len(dfx.groupby(dfx.index)))
     print("nframes:", max(dfx["frame"]+1))
 
-    m = serialmerge(dfx)
+    m = serialmerge(dfx, verbose=options.verbose)
     
     merged = dfx.groupby(dfx.index).mean()
     
@@ -278,7 +289,8 @@ hkl files should be in free format (space separated) with 5 columns: h k l I/F e
         m.index = reversed(m.index)
         t = kendalltau(np.argsort(m["val"]), np.argsort(merged.loc[m.index, "val"]))
 
-    print("Kendall's tau: {:.3f}".format(t))
+    if options.verbose:
+        print("Kendall's tau: {:.3f}".format(t))
     
     fout = open("merged.hkl", "w")
     for i, row in m.iterrows():
