@@ -22,8 +22,8 @@ Example:
  
 ## Other
 
- - CrystDiff, a program for simulating electron diffraction patterns (developed by Wei Wan)
- - Simulated data on SSZ-45, SSZ-53, SSZ-55, SSZ-56, SSZ-58, SSZ-59
+ - [CrystDiff](https://github.com/stefsmeets/serialmerge/releases/tag/crystdiff), a program for simulating electron diffraction patterns (developed by Wei Wan)
+ - [Simulated data on SSZ-45, SSZ-53, SSZ-55, SSZ-56, SSZ-58, SSZ-59](https://github.com/stefsmeets/serialmerge/releases/tag/data)
 
 ## Credits
 
