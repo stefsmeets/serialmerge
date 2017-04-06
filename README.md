@@ -19,6 +19,11 @@ Example:
  - [Python2.7 or Python3.6](https://www.python.org/)
  - [Numpy](http://www.numpy.org/) (tested with 1.11.3)
  - [Pandas](http://pandas.pydata.org/) (tested with 0.19.3)
+ 
+## Other
+
+ - CrystDiff, a program for simulating electron diffraction patterns (developed by Wei Wan)
+ - Simulated data on SSZ-45, SSZ-53, SSZ-55, SSZ-56, SSZ-58, SSZ-59
 
 ## Credits
 
