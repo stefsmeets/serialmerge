@@ -25,6 +25,10 @@ Example:
  - [CrystDiff](https://github.com/stefsmeets/serialmerge/releases/tag/crystdiff), a program for simulating electron diffraction patterns (developed by Wei Wan)
  - [Simulated data on SSZ-45, SSZ-53, SSZ-55, SSZ-56, SSZ-58, SSZ-59](https://github.com/stefsmeets/serialmerge/releases/tag/data)
 
+## Reference
+
+For more information, see [S. Smeets & W. Wan, J. Appl. Cryst. (2017). 50, 885-892 ](https://doi.org/10.1107/S1600576717005854)
+
 ## Credits
 
 Implementation is based on the SerialRank algorithm:
