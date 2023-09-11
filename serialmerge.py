@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 import numpy as np
 import pandas as pd
 import os
 
-__version__ = "2016-11-09"
+__version__ = "2023-09-11"
 __author__ = "Stef Smeets"
-__email__ = "stef.smeets@mmk.su.se"
+__email__ = "s.smeets@esciencecenter.nl"
 
 
 def kendalltau(x, y, initial_lexsort=True):
@@ -82,7 +81,7 @@ def kendalltau(x, y, initial_lexsort=True):
     # compute joint ties
     first = 0
     t = 0
-    for i in xrange(1, n):
+    for i in range(1, n):
         if x[perm[first]] != x[perm[i]] or y[perm[first]] != y[perm[i]]:
             t += ((i - first) * (i - first - 1)) // 2
             first = i
@@ -91,7 +90,7 @@ def kendalltau(x, y, initial_lexsort=True):
     # compute ties in x
     first = 0
     u = 0
-    for i in xrange(1,n):
+    for i in range(1,n):
         if x[perm[first]] != x[perm[i]]:
             u += ((i - first) * (i - first - 1)) // 2
             first = i
@@ -102,7 +101,7 @@ def kendalltau(x, y, initial_lexsort=True):
     # compute ties in y after mergesort with counting
     first = 0
     v = 0
-    for i in xrange(1,n):
+    for i in range(1,n):
         if y[perm[first]] != y[perm[i]]:
             v += ((i - first) * (i - first - 1)) // 2
             first = i
@@ -192,12 +191,12 @@ def serialmerge(df, kind="mean", digitize_threshold=None, key="val", verbose=Fal
     merged.index = index                                      # overwrite index with new ranking
 
     if verbose:
-        print("Array shape: {}".format(C.shape))
-        print("Memory usage: {} MB".format(C.nbytes / (1024*1024)))
+        print(f"Array shape: {C.shape}")
+        print(f"Memory usage: {C.nbytes / (1024*1024)} MB")
         nfilled = np.sum(counter!=0)
-        print("Completeness: {}/{}={:.2%}".format(nfilled, C.size, float(nfilled)/C.size))
-        print("Reflection redundancy: {:.2f}".format(float(len(df)) / len(merged)))
-        print("Pair redundancy: {:.3f}".format(((counter.sum() - refs.size)) / ((nfilled - refs.size))))
+        print(f"Completeness: {nfilled}/{C.size}={float(nfilled)/C.size:.2%}")
+        print(f"Reflection redundancy: {float(len(df)) / len(merged):.2f}")
+        print(f"Pair redundancy: {(counter.sum() - refs.size) / (nfilled - refs.size):.3f}")
 
     return merged
 
@@ -211,21 +210,23 @@ def get_files_in_dir(ext, drc="."):
 
 def load_hkl_files(fns=[]):
     """Load hkl files using pandas, and setup dataframe"""
+    dfx = None
+
     for i, fn in enumerate(fns):
         try:
-            dfn = pd.read_table(fn, sep="\s*", engine="python", index_col=[0,1,2], header=None, names="h k l val sigma".split())
-        except Exception:
-            print("Problem reading file {} {}".format(i, fn))
+            dfn = pd.read_table(fn, sep=r"\s+", index_col=[0,1,2], header=None, names="h k l val sigma".split())
+        except Exception as e:
+            print(f"Problem reading file {i} {fn} ({str(e)})")
             continue
         dfn.index = pd.Index(dfn.index)
         
         dfn["frame"] = i
-    
-        try:
-            dfx = dfx.append(dfn)
-        except NameError:
+
+        if dfx is None:
             dfx = dfn
-    
+        else:
+            dfx = dfx._append(dfn)
+
     return dfx
 
 
@@ -241,7 +242,7 @@ arguments can be a filename (i.e. data.hkl), a directory, or any combination.
 In case a directory is given, SerialMerge will load all the hkl files in that directory.
 hkl files should be in free format (space separated) with 5 columns: h k l I/F esd"""
 
-    epilog = 'Updated: {}'.format(__version__)
+    epilog = f'Updated: {__version__}'
 
     parser = argparse.ArgumentParser(description=description,
                                      epilog=epilog,
@@ -290,13 +291,13 @@ hkl files should be in free format (space separated) with 5 columns: h k l I/F e
         t = kendalltau(np.argsort(m["val"]), np.argsort(merged.loc[m.index, "val"]))
 
     if options.verbose:
-        print("Kendall's tau: {:.3f}".format(t))
+        print(f"Kendall's tau: {t:.3f}")
     
     fout = open("merged.hkl", "w")
     for i, row in m.iterrows():
         h,k,l = i
-        print("{:4d} {:4d} {:4d} {:12.4f}".format(h, k, l, row.val), file=fout)
-    print("\n >> Wrote {} reflections to file {}".format(len(m), fout.name))
+        print(f"{h:4d} {k:4d} {l:4d} {row.val:12.4f}", file=fout)
+    print(f"\n >> Wrote {len(m)} reflections to file {fout.name}")
 
 
 if __name__ == '__main__':
