@@ -29,6 +29,7 @@ def kendalltau(x, y, initial_lexsort=True):
 
     n = np.int64(len(x))
     temp = list(range(n))  # support structure used by mergesort
+
     # this closure recursively sorts sections of perm[] by comparing
     # elements of y[perm[]] using temp[] as support
     # returns the number of swaps required by an equivalent bubble sort
@@ -38,11 +39,11 @@ def kendalltau(x, y, initial_lexsort=True):
         if length == 1:
             return 0
         if length == 2:
-            if y[perm[offs]] <= y[perm[offs+1]]:
+            if y[perm[offs]] <= y[perm[offs + 1]]:
                 return 0
             t = perm[offs]
-            perm[offs] = perm[offs+1]
-            perm[offs+1] = t
+            perm[offs] = perm[offs + 1]
+            perm[offs + 1] = t
             return 1
         length0 = length // 2
         length1 = length - length0
@@ -54,8 +55,8 @@ def kendalltau(x, y, initial_lexsort=True):
         # merging
         i = j = k = 0
         while j < length0 or k < length1:
-            if k >= length1 or (j < length0 and y[perm[offs + j]] <=
-                                                y[perm[middle + k]]):
+            if k >= length1 or (j < length0
+                                and y[perm[offs + j]] <= y[perm[middle + k]]):
                 temp[i] = perm[offs + j]
                 d = i - j
                 j += 1
@@ -66,7 +67,7 @@ def kendalltau(x, y, initial_lexsort=True):
             if d > 0:
                 exchcnt += d
             i += 1
-        perm[offs:offs+length] = temp[0:length]
+        perm[offs:offs + length] = temp[0:length]
         return exchcnt
 
     # initial sort on values of x and, if tied, on values of y
@@ -90,7 +91,7 @@ def kendalltau(x, y, initial_lexsort=True):
     # compute ties in x
     first = 0
     u = 0
-    for i in range(1,n):
+    for i in range(1, n):
         if x[perm[first]] != x[perm[i]]:
             u += ((i - first) * (i - first - 1)) // 2
             first = i
@@ -101,7 +102,7 @@ def kendalltau(x, y, initial_lexsort=True):
     # compute ties in y after mergesort with counting
     first = 0
     v = 0
-    for i in range(1,n):
+    for i in range(1, n):
         if y[perm[first]] != y[perm[i]]:
             v += ((i - first) * (i - first - 1)) // 2
             first = i
@@ -109,7 +110,7 @@ def kendalltau(x, y, initial_lexsort=True):
 
     tot = (n * (n - 1)) // 2
     if tot == u or tot == v:
-        return (np.nan, np.nan)    # Special case for all ties in both ranks
+        return (np.nan, np.nan)  # Special case for all ties in both ranks
 
     # Prevent overflow; equal to np.sqrt((tot - u) * (tot - v))
     denom = np.exp(0.5 * (np.log(tot - u) + np.log(tot - v)))
@@ -126,10 +127,15 @@ def pearsonr(x, y):
     xdiff = x - np.mean(x)
     ydiff = y - np.mean(y)
 
-    return np.sum(xdiff * ydiff) / (np.sum(xdiff * xdiff) * np.sum(ydiff * ydiff))**0.5
+    return np.sum(
+        xdiff * ydiff) / (np.sum(xdiff * xdiff) * np.sum(ydiff * ydiff))**0.5
 
 
-def serialmerge(df, kind="mean", digitize_threshold=None, key="val", verbose=False):
+def serialmerge(df,
+                kind="mean",
+                digitize_threshold=None,
+                key="val",
+                verbose=False):
     """Implementation based on SerialRank algorithm
     http://arxiv.org/abs/1406.5370
     http://www.di.ens.fr/~fogel/SerialRank/tutorial.html"""
@@ -148,24 +154,31 @@ def serialmerge(df, kind="mean", digitize_threshold=None, key="val", verbose=Fal
     merged["Nobs"] = df.groupby(df.index).size()
 
     # setup
-    refs = df.index.drop_duplicates()          # get unique set of indices
-    C = np.eye(refs.size, dtype=np.float32)    # initializing the comparison matrix
-    counter = np.eye(refs.size)                # matrix to keep track of number of observations
+    refs = df.index.drop_duplicates()  # get unique set of indices
+    C = np.eye(refs.size,
+               dtype=np.float32)  # initializing the comparison matrix
+    counter = np.eye(
+        refs.size)  # matrix to keep track of number of observations
 
     # Prepare comparison matrix
     for frame, subdf in df.groupby("frame"):
-        subdf = subdf.groupby(subdf.index)[key].first()      # Check for duplicate reflections from a single frame
-        tri = np.tri(subdf.size, dtype=int)                  # We know that an ordered ranking produces a triangular matrix
-                                                             # So we can make use of that here (for speed reasons)
+        subdf = subdf.groupby(subdf.index)[key].first(
+        )  # Check for duplicate reflections from a single frame
+        tri = np.tri(
+            subdf.size, dtype=int
+        )  # We know that an ordered ranking produces a triangular matrix
+        # So we can make use of that here (for speed reasons)
         idx = [refs.get_loc(ref) for ref in subdf.sort_values().index]
-        ix, jx = np.meshgrid(idx, idx)                       # Generate indices for the triangular matrix
-        C[ix,jx] += tri                                      # The C matrix is mirrored around the diagonal
-        C[ix,jx] -= (1-tri)
-        counter[ix,jx] += 1                                  # Keep track of how many comparisons are made
-    
-    np.divide(C, counter, out=C, where=counter!=0)  # Normalize to number of observations
-                                                    # use np.divide to avoid ZeroDivideWarning
-    if digitize_threshold:                # digitize to only give values of -1, 0, or 1
+        ix, jx = np.meshgrid(idx,
+                             idx)  # Generate indices for the triangular matrix
+        C[ix, jx] += tri  # The C matrix is mirrored around the diagonal
+        C[ix, jx] -= (1 - tri)
+        counter[ix, jx] += 1  # Keep track of how many comparisons are made
+
+    np.divide(C, counter, out=C, where=counter
+              != 0)  # Normalize to number of observations
+    # use np.divide to avoid ZeroDivideWarning
+    if digitize_threshold:  # digitize to only give values of -1, 0, or 1
         bins = (-digitize_threshold, digitize_threshold)
         C = np.digitize(C, bins)
 
@@ -175,28 +188,31 @@ def serialmerge(df, kind="mean", digitize_threshold=None, key="val", verbose=Fal
     Sim = Sim - Sim.min()
 
     # Compute the Laplacian matrix and its second eigenvector
-    L = np.diag(np.sum(Sim,1)) - Sim
+    L = np.diag(np.sum(Sim, 1)) - Sim
     D, V = np.linalg.eigh(L)
     argD = np.argsort(D)
     D = D[argD]
-    V = V[:,argD]
-    fiedler = V[:,1]
+    V = V[:, argD]
+    fiedler = V[:, 1]
 
     # get new index
     retrievedPerm = np.argsort(fiedler)
     index = pd.Index(refs[retrievedPerm])
 
     # update dataframe
-    merged.sort_values(key, ascending=False, inplace=True)    # sort the values by intensity
-    merged.index = index                                      # overwrite index with new ranking
+    merged.sort_values(key, ascending=False,
+                       inplace=True)  # sort the values by intensity
+    merged.index = index  # overwrite index with new ranking
 
     if verbose:
         print(f"Array shape: {C.shape}")
         print(f"Memory usage: {C.nbytes / (1024*1024)} MB")
-        nfilled = np.sum(counter!=0)
+        nfilled = np.sum(counter != 0)
         print(f"Completeness: {nfilled}/{C.size}={float(nfilled)/C.size:.2%}")
         print(f"Reflection redundancy: {float(len(df)) / len(merged):.2f}")
-        print(f"Pair redundancy: {(counter.sum() - refs.size) / (nfilled - refs.size):.3f}")
+        print(
+            f"Pair redundancy: {(counter.sum() - refs.size) / (nfilled - refs.size):.3f}"
+        )
 
     return merged
 
@@ -214,12 +230,16 @@ def load_hkl_files(fns=[]):
 
     for i, fn in enumerate(fns):
         try:
-            dfn = pd.read_table(fn, sep=r"\s+", index_col=[0,1,2], header=None, names="h k l val sigma".split())
+            dfn = pd.read_table(fn,
+                                sep=r"\s+",
+                                index_col=[0, 1, 2],
+                                header=None,
+                                names="h k l val sigma".split())
         except Exception as e:
             print(f"Problem reading file {i} {fn} ({str(e)})")
             continue
         dfn.index = pd.Index(dfn.index)
-        
+
         dfn["frame"] = i
 
         if dfx is None:
@@ -244,17 +264,22 @@ hkl files should be in free format (space separated) with 5 columns: h k l I/F e
 
     epilog = f'Updated: {__version__}'
 
-    parser = argparse.ArgumentParser(description=description,
-                                     epilog=epilog,
-                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=description,
+        epilog=epilog,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
 
     parser = argparse.ArgumentParser()
 
     parser.add_argument("args",
-                        type=str, metavar="FN", nargs='*',
+                        type=str,
+                        metavar="FN",
+                        nargs='*',
                         help="File or directory name")
-    parser.add_argument("--verbose", "-v",
-                        action="store_true", dest="verbose",
+    parser.add_argument("--verbose",
+                        "-v",
+                        action="store_true",
+                        dest="verbose",
                         help="Be more verbose.")
 
     parser.set_defaults()
@@ -278,24 +303,26 @@ hkl files should be in free format (space separated) with 5 columns: h k l I/F e
     print()
     print("reflections:", len(dfx))
     print("unique reflections:", len(dfx.groupby(dfx.index)))
-    print("nframes:", max(dfx["frame"]+1))
+    print("nframes:", max(dfx["frame"] + 1))
 
     m = serialmerge(dfx, verbose=options.verbose)
-    
+
     merged = dfx.groupby(dfx.index).mean()
-    
+
     # calculate kendall tau to see whether order should be reversed
-    t = kendalltau(np.argsort(m["val"]), np.argsort(merged.loc[m.index, "val"]))
+    t = kendalltau(np.argsort(m["val"]), np.argsort(merged.loc[m.index,
+                                                               "val"]))
     if t < 0:
         m.index = reversed(m.index)
-        t = kendalltau(np.argsort(m["val"]), np.argsort(merged.loc[m.index, "val"]))
+        t = kendalltau(np.argsort(m["val"]),
+                       np.argsort(merged.loc[m.index, "val"]))
 
     if options.verbose:
         print(f"Kendall's tau: {t:.3f}")
-    
+
     fout = open("merged.hkl", "w")
     for i, row in m.iterrows():
-        h,k,l = i
+        h, k, l = i
         print(f"{h:4d} {k:4d} {l:4d} {row.val:12.4f}", file=fout)
     print(f"\n >> Wrote {len(m)} reflections to file {fout.name}")
 
